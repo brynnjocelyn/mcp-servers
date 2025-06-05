@@ -1,0 +1,42 @@
+{
+  "name": "postgresql-mcp-server",
+  "version": "1.0.0",
+  "description": "A Model Context Protocol server for managing PostgreSQL databases",
+  "main": "dist/mcp-server.js",
+  "type": "module",
+  "bin": {
+    "postgresql-mcp": "./dist/mcp-server.js"
+  },
+  "scripts": {
+    "start": "node dist/mcp-server.js",
+    "dev": "ts-node --esm src/mcp-server.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "postgresql",
+    "postgres",
+    "mcp",
+    "model-context-protocol",
+    "database",
+    "sql",
+    "llm",
+    "ai"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.3",
+    "pg": "^8.11.3",
+    "pg-format": "^1.0.4",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.24.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "@types/pg": "^8.11.3",
+    "@types/pg-format": "^1.0.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
