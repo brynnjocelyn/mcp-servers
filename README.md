@@ -4,11 +4,13 @@ A collection of Model Context Protocol (MCP) servers for integrating databases a
 
 ## Overview
 
-This repository contains three comprehensive MCP servers:
+This repository contains five comprehensive MCP servers:
 
 - **[PostgreSQL MCP Server](./postgresql-mcp-server)** - Full-featured PostgreSQL database management (25+ tools)
 - **[Redis MCP Server](./redis-mcp-server)** - Complete Redis operations and data structures (70+ tools)
 - **[PocketBase MCP Server](./pocketbase-mcp-server)** - Comprehensive PocketBase instance management (60+ tools)
+- **[S3 MCP Server](./s3-mcp-server)** - S3-compatible object storage management (AWS S3, MinIO, DigitalOcean Spaces, etc.) (20+ tools)
+- **[Prisma MCP Server](./prisma-mcp-server)** - Universal database ORM supporting PostgreSQL, MySQL, SQLite, MongoDB, and more (25+ tools)
 
 Each server implements the Model Context Protocol specification, enabling LLMs to interact with these services through standardized tools.
 
@@ -21,6 +23,8 @@ Each server implements the Model Context Protocol specification, enabling LLMs t
   - PostgreSQL for postgresql-mcp-server
   - Redis for redis-mcp-server
   - PocketBase for pocketbase-mcp-server
+  - S3-compatible storage (AWS S3, MinIO, etc.) for s3-mcp-server
+  - Any Prisma-supported database for prisma-mcp-server
 
 ### Installation
 
@@ -45,6 +49,16 @@ npm run build
 
 # PocketBase MCP Server
 cd ../pocketbase-mcp-server
+npm install
+npm run build
+
+# S3 MCP Server
+cd ../s3-mcp-server
+npm install
+npm run build
+
+# Prisma MCP Server
+cd ../prisma-mcp-server
 npm install
 npm run build
 ```
@@ -107,6 +121,50 @@ Or use environment variables:
 export POCKETBASE_URL=http://localhost:8090
 ```
 
+#### S3 Configuration
+
+Create `.s3-mcp.json` in your project:
+```json
+{
+  "endPoint": "s3.amazonaws.com",
+  "port": 443,
+  "useSSL": true,
+  "accessKey": "your-access-key",
+  "secretKey": "your-secret-key",
+  "region": "us-east-1"
+}
+```
+
+Or use environment variables:
+```bash
+# For AWS S3
+export AWS_ACCESS_KEY_ID=your-access-key
+export AWS_SECRET_ACCESS_KEY=your-secret-key
+export AWS_REGION=us-east-1
+
+# For MinIO or other S3-compatible services
+export MINIO_ENDPOINT=localhost
+export MINIO_PORT=9000
+export MINIO_ACCESS_KEY=minioadmin
+export MINIO_SECRET_KEY=minioadmin
+```
+
+#### Prisma Configuration
+
+Create `.prisma-mcp.json` in your project:
+```json
+{
+  "databaseUrl": "postgresql://user:password@localhost:5432/mydb",
+  "schemaPath": "./prisma/schema.prisma",
+  "enableLogging": true
+}
+```
+
+Or use environment variables:
+```bash
+export DATABASE_URL=postgresql://user:password@localhost:5432/mydb
+export PRISMA_SCHEMA_PATH=./prisma/schema.prisma
+
 ## Claude Desktop Integration
 
 Add the servers to your Claude Desktop configuration file:
@@ -141,6 +199,22 @@ Add the servers to your Claude Desktop configuration file:
       "args": [],
       "env": {
         "POCKETBASE_URL": "http://localhost:8090"
+      }
+    },
+    "s3": {
+      "command": "/path/to/mcp-servers/s3-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "your-access-key",
+        "AWS_SECRET_ACCESS_KEY": "your-secret-key",
+        "AWS_REGION": "us-east-1"
+      }
+    },
+    "prisma": {
+      "command": "/path/to/mcp-servers/prisma-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "DATABASE_URL": "postgresql://user:password@localhost:5432/mydb"
       }
     }
   }
@@ -200,6 +274,21 @@ See [Multi-Database Setup Guide](./docs/multi-database-setup.md) for detailed in
 - **Authentication**: Multiple auth methods, user management
 - **File Management**: URL generation, private files
 - **System Operations**: Backups, logs, settings, hooks
+
+### S3 MCP Server
+- **Universal S3 Support**: Works with AWS S3, MinIO, DigitalOcean Spaces, Backblaze B2, etc.
+- **Bucket Operations**: Create, list, delete, policies, versioning
+- **Object Management**: Upload, download, copy, delete, metadata
+- **Storage Tools**: Presigned URLs, tags, usage statistics
+- **Binary Support**: Handle text and binary content seamlessly
+
+### Prisma MCP Server
+- **Multi-Database Support**: PostgreSQL, MySQL, SQLite, MongoDB, SQL Server, CockroachDB
+- **Schema Management**: Read, write, validate, format Prisma schemas
+- **Migration System**: Create, apply, deploy, rollback database migrations
+- **Data Operations**: Full CRUD with relations, filtering, pagination
+- **Advanced Queries**: Aggregations, raw SQL, transactions
+- **Development Tools**: Database introspection, seeding, reset
 
 ## Development
 
@@ -268,6 +357,15 @@ Each server has detailed documentation:
 
 - [PocketBase MCP Server](./pocketbase-mcp-server/README.md)
   - [Config Examples](./pocketbase-mcp-server/CONFIG_EXAMPLES.md)
+
+- [S3 MCP Server](./s3-mcp-server/README.md)
+  - [Tools Reference](./s3-mcp-server/TOOLS.md)
+  - [Config Examples](./s3-mcp-server/CONFIG_EXAMPLES.md)
+  - [MinIO Configuration Guide](./s3-mcp-server/MINIO_GUIDE.md)
+
+- [Prisma MCP Server](./prisma-mcp-server/README.md)
+  - [Tools Reference](./prisma-mcp-server/TOOLS.md)
+  - [Config Examples](./prisma-mcp-server/CONFIG_EXAMPLES.md)
 
 ## Contributing
 
