@@ -4,7 +4,7 @@ A collection of Model Context Protocol (MCP) servers for integrating databases a
 
 ## Overview
 
-This repository contains six comprehensive MCP servers:
+This repository contains seven comprehensive MCP servers:
 
 - **[PostgreSQL MCP Server](./postgresql-mcp-server)** - Full-featured PostgreSQL database management (25+ tools)
 - **[Redis MCP Server](./redis-mcp-server)** - Complete Redis operations and data structures (70+ tools)
@@ -12,6 +12,7 @@ This repository contains six comprehensive MCP servers:
 - **[S3 MCP Server](./s3-mcp-server)** - S3-compatible object storage management (AWS S3, MinIO, DigitalOcean Spaces, etc.) (20+ tools)
 - **[Prisma MCP Server](./prisma-mcp-server)** - Universal database ORM supporting PostgreSQL, MySQL, SQLite, MongoDB, and more (25+ tools)
 - **[Proxmox MCP Server](./proxmox-mcp-server)** - Proxmox VE virtualization platform management for VMs, containers, and infrastructure (30+ tools)
+- **[Cloudflare MCP Server](./cloudflare-mcp-server)** - Complete Cloudflare services management including DNS, security, Workers, and R2 storage (40+ tools)
 
 Each server implements the Model Context Protocol specification, enabling LLMs to interact with these services through standardized tools.
 
@@ -27,6 +28,7 @@ Each server implements the Model Context Protocol specification, enabling LLMs t
   - S3-compatible storage (AWS S3, MinIO, etc.) for s3-mcp-server
   - Any Prisma-supported database for prisma-mcp-server
   - Proxmox VE for proxmox-mcp-server
+  - Cloudflare account for cloudflare-mcp-server
 
 ### Installation
 
@@ -66,6 +68,11 @@ npm run build
 
 # Proxmox MCP Server
 cd ../proxmox-mcp-server
+npm install
+npm run build
+
+# Cloudflare MCP Server
+cd ../cloudflare-mcp-server
 npm install
 npm run build
 ```
@@ -196,6 +203,22 @@ export PROXMOX_TOKEN_ID=mcp-token
 export PROXMOX_TOKEN_SECRET=your-token-secret
 ```
 
+#### Cloudflare Configuration
+
+Create `.cloudflare-mcp.json` in your project:
+```json
+{
+  "apiToken": "your-cloudflare-api-token",
+  "accountId": "your-account-id"
+}
+```
+
+Or use environment variables:
+```bash
+export CLOUDFLARE_API_TOKEN=your-api-token
+export CLOUDFLARE_ACCOUNT_ID=your-account-id
+```
+
 ## Claude Desktop Integration
 
 Add the servers to your Claude Desktop configuration file:
@@ -257,6 +280,13 @@ Add the servers to your Claude Desktop configuration file:
         "PROXMOX_REALM": "pve",
         "PROXMOX_TOKEN_ID": "mcp-token",
         "PROXMOX_TOKEN_SECRET": "your-token-secret"
+      }
+    },
+    "cloudflare": {
+      "command": "/path/to/mcp-servers/cloudflare-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "CLOUDFLARE_API_TOKEN": "your-api-token"
       }
     }
   }
@@ -340,6 +370,14 @@ See [Multi-Database Setup Guide](./docs/multi-database-setup.md) for detailed in
 - **Backup/Restore**: Automated backups with compression and scheduling
 - **Task Monitoring**: Track long-running operations and migrations
 
+### Cloudflare MCP Server
+- **DNS Management**: Complete DNS record management with all record types
+- **Security Features**: Firewall rules, WAF, SSL/TLS certificates, DDoS protection
+- **Performance**: Cache management, page rules, performance optimization
+- **Workers Platform**: Deploy and manage Workers scripts, KV storage, cron triggers
+- **R2 Storage**: S3-compatible object storage management
+- **Zone Management**: Create, configure, and manage Cloudflare zones
+
 ## Development
 
 ### Running in Development
@@ -420,6 +458,10 @@ Each server has detailed documentation:
 - [Proxmox MCP Server](./proxmox-mcp-server/README.md)
   - [Tools Reference](./proxmox-mcp-server/TOOLS.md)
   - [Config Examples](./proxmox-mcp-server/CONFIG_EXAMPLES.md)
+
+- [Cloudflare MCP Server](./cloudflare-mcp-server/README.md)
+  - [Tools Reference](./cloudflare-mcp-server/TOOLS.md)
+  - [Config Examples](./cloudflare-mcp-server/CONFIG_EXAMPLES.md)
 
 - [MCP Scopes Documentation](./MCP_SCOPES.md)
 
