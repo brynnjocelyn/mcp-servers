@@ -1,0 +1,35 @@
+{
+  "name": "proxmox-mcp-server",
+  "version": "1.0.0",
+  "description": "A Model Context Protocol server for Proxmox VE virtualization platform management",
+  "main": "dist/mcp-server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/mcp-server.ts",
+    "start": "node dist/mcp-server.js"
+  },
+  "keywords": [
+    "mcp",
+    "proxmox",
+    "virtualization",
+    "kvm",
+    "lxc",
+    "qemu",
+    "containers"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "latest",
+    "axios": "^1.6.0",
+    "https-proxy-agent": "^7.0.0",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -4,13 +4,14 @@ A collection of Model Context Protocol (MCP) servers for integrating databases a
 
 ## Overview
 
-This repository contains five comprehensive MCP servers:
+This repository contains six comprehensive MCP servers:
 
 - **[PostgreSQL MCP Server](./postgresql-mcp-server)** - Full-featured PostgreSQL database management (25+ tools)
 - **[Redis MCP Server](./redis-mcp-server)** - Complete Redis operations and data structures (70+ tools)
 - **[PocketBase MCP Server](./pocketbase-mcp-server)** - Comprehensive PocketBase instance management (60+ tools)
 - **[S3 MCP Server](./s3-mcp-server)** - S3-compatible object storage management (AWS S3, MinIO, DigitalOcean Spaces, etc.) (20+ tools)
 - **[Prisma MCP Server](./prisma-mcp-server)** - Universal database ORM supporting PostgreSQL, MySQL, SQLite, MongoDB, and more (25+ tools)
+- **[Proxmox MCP Server](./proxmox-mcp-server)** - Proxmox VE virtualization platform management for VMs, containers, and infrastructure (30+ tools)
 
 Each server implements the Model Context Protocol specification, enabling LLMs to interact with these services through standardized tools.
 
@@ -25,6 +26,7 @@ Each server implements the Model Context Protocol specification, enabling LLMs t
   - PocketBase for pocketbase-mcp-server
   - S3-compatible storage (AWS S3, MinIO, etc.) for s3-mcp-server
   - Any Prisma-supported database for prisma-mcp-server
+  - Proxmox VE for proxmox-mcp-server
 
 ### Installation
 
@@ -59,6 +61,11 @@ npm run build
 
 # Prisma MCP Server
 cd ../prisma-mcp-server
+npm install
+npm run build
+
+# Proxmox MCP Server
+cd ../proxmox-mcp-server
 npm install
 npm run build
 ```
@@ -164,6 +171,30 @@ Or use environment variables:
 ```bash
 export DATABASE_URL=postgresql://user:password@localhost:5432/mydb
 export PRISMA_SCHEMA_PATH=./prisma/schema.prisma
+```
+
+#### Proxmox Configuration
+
+Create `.proxmox-mcp.json` in your project:
+```json
+{
+  "host": "proxmox.example.com",
+  "port": 8006,
+  "username": "api-user",
+  "realm": "pve",
+  "tokenId": "mcp-token",
+  "tokenSecret": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}
+```
+
+Or use environment variables:
+```bash
+export PROXMOX_HOST=proxmox.example.com
+export PROXMOX_USERNAME=api-user
+export PROXMOX_REALM=pve
+export PROXMOX_TOKEN_ID=mcp-token
+export PROXMOX_TOKEN_SECRET=your-token-secret
+```
 
 ## Claude Desktop Integration
 
@@ -215,6 +246,17 @@ Add the servers to your Claude Desktop configuration file:
       "args": [],
       "env": {
         "DATABASE_URL": "postgresql://user:password@localhost:5432/mydb"
+      }
+    },
+    "proxmox": {
+      "command": "/path/to/mcp-servers/proxmox-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "PROXMOX_HOST": "proxmox.example.com",
+        "PROXMOX_USERNAME": "api-user",
+        "PROXMOX_REALM": "pve",
+        "PROXMOX_TOKEN_ID": "mcp-token",
+        "PROXMOX_TOKEN_SECRET": "your-token-secret"
       }
     }
   }
@@ -289,6 +331,14 @@ See [Multi-Database Setup Guide](./docs/multi-database-setup.md) for detailed in
 - **Data Operations**: Full CRUD with relations, filtering, pagination
 - **Advanced Queries**: Aggregations, raw SQL, transactions
 - **Development Tools**: Database introspection, seeding, reset
+
+### Proxmox MCP Server
+- **VM Management**: Create, clone, start, stop, migrate virtual machines
+- **Container Support**: Full LXC container lifecycle management
+- **Storage Operations**: Manage disks, ISOs, templates, and backups
+- **Cluster Management**: Monitor nodes, resources, and cluster health
+- **Backup/Restore**: Automated backups with compression and scheduling
+- **Task Monitoring**: Track long-running operations and migrations
 
 ## Development
 
@@ -366,6 +416,12 @@ Each server has detailed documentation:
 - [Prisma MCP Server](./prisma-mcp-server/README.md)
   - [Tools Reference](./prisma-mcp-server/TOOLS.md)
   - [Config Examples](./prisma-mcp-server/CONFIG_EXAMPLES.md)
+
+- [Proxmox MCP Server](./proxmox-mcp-server/README.md)
+  - [Tools Reference](./proxmox-mcp-server/TOOLS.md)
+  - [Config Examples](./proxmox-mcp-server/CONFIG_EXAMPLES.md)
+
+- [MCP Scopes Documentation](./MCP_SCOPES.md)
 
 ## Contributing
 
