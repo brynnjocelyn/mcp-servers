@@ -110,6 +110,64 @@ const CreateContainerSchema = zod_1.z.object({
     password: zod_1.z.string().optional().describe('Root password'),
     ssh_public_keys: zod_1.z.string().optional().describe('SSH public keys'),
 });
+const MigrateContainerSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Source node'),
+    vmid: zod_1.z.number().describe('Container ID'),
+    target: zod_1.z.string().describe('Target node'),
+    restart: zod_1.z.boolean().optional().describe('Restart container after migration'),
+    timeout: zod_1.z.number().optional().describe('Timeout in seconds'),
+});
+const ShutdownContainerSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Container ID'),
+    timeout: zod_1.z.number().optional().describe('Timeout in seconds'),
+    forceStop: zod_1.z.boolean().optional().describe('Force stop after timeout'),
+});
+const RebootContainerSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Container ID'),
+    timeout: zod_1.z.number().optional().describe('Timeout in seconds'),
+});
+const CloneContainerSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Source container ID'),
+    newid: zod_1.z.number().describe('New container ID'),
+    hostname: zod_1.z.string().optional().describe('New container hostname'),
+    full: zod_1.z.boolean().optional().default(true).describe('Full clone (not linked)'),
+    storage: zod_1.z.string().optional().describe('Target storage'),
+});
+const DeleteContainerSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Container ID'),
+    purge: zod_1.z.boolean().optional().describe('Remove from backup jobs and HA'),
+    destroyUnreferencedDisks: zod_1.z.boolean().optional().describe('Destroy unreferenced disks'),
+});
+const ResizeContainerSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Container ID'),
+    disk: zod_1.z.string().describe('Disk to resize (e.g., rootfs)'),
+    size: zod_1.z.string().describe('New size (e.g., +2G or 32G)'),
+});
+const SnapshotContainerSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Container ID'),
+    snapname: zod_1.z.string().describe('Snapshot name'),
+    description: zod_1.z.string().optional().describe('Snapshot description'),
+});
+const DeleteContainerSnapshotSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Container ID'),
+    snapname: zod_1.z.string().describe('Snapshot name'),
+});
+const RestoreContainerSnapshotSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Container ID'),
+    snapname: zod_1.z.string().describe('Snapshot name'),
+});
+const ListContainerSnapshotsSchema = zod_1.z.object({
+    node: zod_1.z.string().describe('Node name'),
+    vmid: zod_1.z.number().describe('Container ID'),
+});
 // Storage Management Schemas
 const ListStorageSchema = zod_1.z.object({
     node: zod_1.z.string().optional().describe('Node name (optional)'),
@@ -306,6 +364,56 @@ server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => {
                 name: 'create_container',
                 description: 'Create a new LXC container',
                 inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(CreateContainerSchema),
+            },
+            {
+                name: 'migrate_container',
+                description: 'Migrate a container to another node',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(MigrateContainerSchema),
+            },
+            {
+                name: 'shutdown_container',
+                description: 'Gracefully shutdown a container',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(ShutdownContainerSchema),
+            },
+            {
+                name: 'reboot_container',
+                description: 'Reboot a container',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(RebootContainerSchema),
+            },
+            {
+                name: 'clone_container',
+                description: 'Clone an LXC container',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(CloneContainerSchema),
+            },
+            {
+                name: 'delete_container',
+                description: 'Delete an LXC container',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(DeleteContainerSchema),
+            },
+            {
+                name: 'resize_container',
+                description: 'Resize container disk',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(ResizeContainerSchema),
+            },
+            {
+                name: 'snapshot_container',
+                description: 'Create container snapshot',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(SnapshotContainerSchema),
+            },
+            {
+                name: 'delete_container_snapshot',
+                description: 'Delete container snapshot',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(DeleteContainerSnapshotSchema),
+            },
+            {
+                name: 'restore_container_snapshot',
+                description: 'Restore container from snapshot',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(RestoreContainerSnapshotSchema),
+            },
+            {
+                name: 'list_container_snapshots',
+                description: 'List container snapshots',
+                inputSchema: (0, zod_to_json_schema_1.zodToJsonSchema)(ListContainerSnapshotsSchema),
             },
             // Storage Management
             {
@@ -616,6 +724,141 @@ server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
                         {
                             type: 'text',
                             text: `Container creation initiated. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'migrate_container': {
+                const { node, vmid, ...migrateParams } = MigrateContainerSchema.parse(args);
+                const result = await client.post(`/nodes/${node}/lxc/${vmid}/migrate`, migrateParams);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container migration initiated. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'shutdown_container': {
+                const { node, vmid, timeout, forceStop } = ShutdownContainerSchema.parse(args);
+                const result = await client.post(`/nodes/${node}/lxc/${vmid}/status/shutdown`, {
+                    timeout,
+                    forceStop
+                });
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container ${vmid} shutdown initiated. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'reboot_container': {
+                const { node, vmid, timeout } = RebootContainerSchema.parse(args);
+                const result = await client.post(`/nodes/${node}/lxc/${vmid}/status/reboot`, { timeout });
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container ${vmid} reboot initiated. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'clone_container': {
+                const { node, vmid, ...cloneParams } = CloneContainerSchema.parse(args);
+                const result = await client.post(`/nodes/${node}/lxc/${vmid}/clone`, cloneParams);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container clone initiated. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'delete_container': {
+                const { node, vmid, purge, destroyUnreferencedDisks } = DeleteContainerSchema.parse(args);
+                const params = new URLSearchParams();
+                if (purge)
+                    params.append('purge', '1');
+                if (destroyUnreferencedDisks)
+                    params.append('destroy-unreferenced-disks', '1');
+                const queryString = params.toString();
+                const result = await client.delete(`/nodes/${node}/lxc/${vmid}${queryString ? '?' + queryString : ''}`);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container ${vmid} deletion initiated. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'resize_container': {
+                const { node, vmid, disk, size } = ResizeContainerSchema.parse(args);
+                const result = await client.put(`/nodes/${node}/lxc/${vmid}/resize`, {
+                    disk,
+                    size
+                });
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container ${vmid} resize initiated. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'snapshot_container': {
+                const { node, vmid, snapname, description } = SnapshotContainerSchema.parse(args);
+                const result = await client.post(`/nodes/${node}/lxc/${vmid}/snapshot`, {
+                    snapname,
+                    description
+                });
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container ${vmid} snapshot '${snapname}' created. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'delete_container_snapshot': {
+                const { node, vmid, snapname } = DeleteContainerSnapshotSchema.parse(args);
+                const result = await client.delete(`/nodes/${node}/lxc/${vmid}/snapshot/${snapname}`);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container ${vmid} snapshot '${snapname}' deleted. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'restore_container_snapshot': {
+                const { node, vmid, snapname } = RestoreContainerSnapshotSchema.parse(args);
+                const result = await client.post(`/nodes/${node}/lxc/${vmid}/snapshot/${snapname}/rollback`);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Container ${vmid} restored from snapshot '${snapname}'. Task: ${result}`,
+                        },
+                    ],
+                };
+            }
+            case 'list_container_snapshots': {
+                const { node, vmid } = ListContainerSnapshotsSchema.parse(args);
+                const snapshots = await client.get(`/nodes/${node}/lxc/${vmid}/snapshot`);
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(snapshots, null, 2),
                         },
                     ],
                 };
