@@ -147,7 +147,8 @@ const server = new Server(
 const config = loadConfig();
 const prismaService = new PrismaService(
   config.schemaPath || 'prisma/schema.prisma',
-  config.migrationsDir || 'prisma/migrations'
+  config.migrationsDir || 'prisma/migrations',
+  config.projectRoot
 );
 
 // Dynamic Prisma Client instance (only created when schema exists and is valid)
@@ -160,13 +161,17 @@ async function initializePrismaClient() {
   try {
     if (prismaService.schemaExists()) {
       await prismaService.generate();
-      // Dynamically import Prisma Client
-      const { PrismaClient } = await import('@prisma/client');
+      // Dynamically import Prisma Client from project root
+      const prismaClientPath = config.projectRoot ? 
+        join(config.projectRoot, 'node_modules', '@prisma/client') : 
+        '@prisma/client';
+      
+      const { PrismaClient } = await import(prismaClientPath);
       prisma = new PrismaClient({
         log: config.enableLogging ? ['query', 'info', 'warn', 'error'] : [],
       });
       await prisma.$connect();
-      console.error('Prisma Client initialized successfully');
+      console.error(`Prisma Client initialized successfully from ${prismaClientPath}`);
     }
   } catch (error) {
     console.error('Failed to initialize Prisma Client:', error);
@@ -312,6 +317,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: 'execute_raw',
         description: 'Execute raw SQL queries',
         inputSchema: zodToJsonSchema(ExecuteRawSchema),
+      },
+      {
+        name: 'test_connection',
+        description: 'Test database connection and validate configuration',
+        inputSchema: zodToJsonSchema(z.object({})),
       },
     ],
   };
@@ -730,6 +740,104 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'test_connection': {
+        const results: string[] = [];
+        
+        // Check configuration
+        results.push('Configuration Status:');
+        results.push(`  Database URL: ${config.databaseUrl ? 'Configured' : 'Not configured'}`);
+        results.push(`  Database Provider: ${config.databaseProvider || 'Not detected'}`);
+        results.push(`  Schema Path: ${config.schemaPath}`);
+        results.push(`  Project Root: ${config.projectRoot}`);
+        
+        if (config.ssl?.enabled) {
+          results.push(`  SSL Enabled: Yes`);
+          results.push(`    Reject Unauthorized: ${config.ssl.rejectUnauthorized || false}`);
+        }
+        
+        if (config.pool) {
+          results.push(`  Connection Pool:`);
+          results.push(`    Max: ${config.pool.max || config.connectionLimit || 10}`);
+          if (config.pool.min) results.push(`    Min: ${config.pool.min}`);
+        }
+        
+        results.push('');
+        
+        // Check schema file
+        results.push('Schema Status:');
+        if (prismaService.schemaExists()) {
+          results.push('  ✓ Schema file exists');
+        } else {
+          results.push('  ✗ Schema file not found');
+          results.push('    Run init_prisma to create a schema file');
+        }
+        
+        results.push('');
+        
+        // Test database connection
+        results.push('Database Connection:');
+        if (!config.databaseUrl) {
+          results.push('  ✗ No database URL configured');
+          results.push('    Please configure DATABASE_URL or add to .prisma-mcp.json');
+        } else if (!prisma) {
+          results.push('  ✗ Prisma Client not initialized');
+          results.push('    Ensure schema is valid and run generate_client');
+        } else {
+          try {
+            // Try a simple query to test connection
+            await prisma.$queryRaw`SELECT 1`;
+            results.push('  ✓ Database connection successful');
+            
+            // Get database version if possible
+            try {
+              let versionQuery;
+              switch (config.databaseProvider) {
+                case 'postgresql':
+                case 'cockroachdb':
+                  versionQuery = await prisma.$queryRaw`SELECT version()`;
+                  break;
+                case 'mysql':
+                  versionQuery = await prisma.$queryRaw`SELECT VERSION()`;
+                  break;
+                case 'sqlserver':
+                  versionQuery = await prisma.$queryRaw`SELECT @@VERSION`;
+                  break;
+                default:
+                  versionQuery = null;
+              }
+              
+              if (versionQuery && Array.isArray(versionQuery) && versionQuery.length > 0) {
+                const version = Object.values(versionQuery[0])[0];
+                results.push(`  Database Version: ${version}`);
+              }
+            } catch (e) {
+              // Version query failed, not critical
+            }
+          } catch (error) {
+            results.push('  ✗ Database connection failed');
+            results.push(`    Error: ${error instanceof Error ? error.message : String(error)}`);
+            results.push('');
+            results.push('  Troubleshooting:');
+            results.push('    1. Check if database is running');
+            results.push('    2. Verify connection URL and credentials');
+            results.push('    3. Check network connectivity');
+            results.push('    4. Ensure database user has proper permissions');
+            if (config.ssl?.enabled) {
+              results.push('    5. Verify SSL certificates are valid');
+            }
+          }
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: results.join('\n'),
             },
           ],
         };

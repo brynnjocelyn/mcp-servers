@@ -47,6 +47,120 @@ npm install
 npm run build
 ```
 
+## Multiple Instance Support
+
+The Redis MCP server supports running multiple instances with different configurations by using the `MCP_SERVER_NAME` environment variable. This enables you to connect to multiple Redis instances simultaneously or use different configurations for different environments.
+
+### Instance-Specific Configuration
+
+When `MCP_SERVER_NAME` is set, the server will look for a configuration file named `.{MCP_SERVER_NAME}-redis-mcp.json` instead of the default `.redis-mcp.json`.
+
+**Example: Development and Production Instances**
+```bash
+# Development instance
+export MCP_SERVER_NAME=dev
+# Uses: .dev-redis-mcp.json
+
+# Production instance  
+export MCP_SERVER_NAME=prod
+# Uses: .prod-redis-mcp.json
+
+# Default instance (no MCP_SERVER_NAME)
+# Uses: .redis-mcp.json
+```
+
+### Configuration File Resolution
+
+The server resolves configuration in this order:
+1. **Instance-specific config**: `.{MCP_SERVER_NAME}-redis-mcp.json` (if MCP_SERVER_NAME is set)
+2. **Default config file**: `.redis-mcp.json`
+3. **Environment variables**: Individual Redis variables or URLs
+4. **Default values**: Standard Redis defaults
+
+### Benefits of Multiple Instances
+
+- **Multi-environment**: Separate dev, staging, and production Redis instances
+- **Microservices**: Different Redis databases for different services
+- **Testing**: Isolated test environments with dedicated configurations
+- **Claude Code**: Perfect for managing multiple projects with different Redis setups
+
+### Example: Multiple Redis Instances
+
+**.dev-redis-mcp.json** (Development):
+```json
+{
+  "host": "localhost",
+  "port": 6379,
+  "db": 1,
+  "keyPrefix": "dev:",
+  "lazyConnect": false
+}
+```
+
+**.prod-redis-mcp.json** (Production):
+```json
+{
+  "host": "redis.example.com",
+  "port": 6380,
+  "password": "secure_password",
+  "tls": { "rejectUnauthorized": true },
+  "keyPrefix": "prod:"
+}
+```
+
+**.redis-mcp.json** (Default):
+```json
+{
+  "host": "localhost",
+  "port": 6379,
+  "db": 0
+}
+```
+
+### Claude Code Usage
+
+With Claude Code, you can easily switch between Redis instances:
+
+```bash
+# Work with development Redis
+MCP_SERVER_NAME=dev claude-code "List all keys with dev prefix"
+
+# Work with production Redis  
+MCP_SERVER_NAME=prod claude-code "Check Redis server info"
+
+# Work with default Redis
+claude-code "Get Redis database size"
+```
+
+### Claude Desktop Integration
+
+For Claude Desktop, configure multiple Redis servers:
+
+```json
+{
+  "mcpServers": {
+    "redis-dev": {
+      "command": "node",
+      "args": ["/path/to/redis-mcp-server/dist/mcp-server.js"],
+      "env": {
+        "MCP_SERVER_NAME": "dev"
+      }
+    },
+    "redis-prod": {
+      "command": "node", 
+      "args": ["/path/to/redis-mcp-server/dist/mcp-server.js"],
+      "env": {
+        "MCP_SERVER_NAME": "prod"
+      }
+    },
+    "redis": {
+      "command": "node",
+      "args": ["/path/to/redis-mcp-server/dist/mcp-server.js"]
+    }
+  }
+}
+```
+
 ## Authentication & Configuration
 
 The Redis MCP server supports multiple connection methods and configurations:
@@ -407,3 +521,5 @@ Use the `ping` tool to test your connection:
 ## License
 
 ISC
+
+Last Updated On: June 14, 2025

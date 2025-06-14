@@ -5,18 +5,37 @@ import { join } from 'path';
  * Load PocketBase configuration from various sources
  */
 export function loadPocketBaseUrl(): string {
-  // 1. Check for .pocketbase-mcp.json in current directory
-  const localConfigPath = join(process.cwd(), '.pocketbase-mcp.json');
-  if (existsSync(localConfigPath)) {
+  // Determine config file name - check for MCP instance name first
+  const mcpServerName = process.env.MCP_SERVER_NAME || 'pocketbase-mcp';
+  const configFileName = `.${mcpServerName}.json`;
+  const configPath = join(process.cwd(), configFileName);
+  
+  // Fallback to default name if custom name doesn't exist
+  const defaultConfigPath = join(process.cwd(), '.pocketbase-mcp.json');
+  
+  // 1. Check for instance-specific config file in current directory
+  if (existsSync(configPath)) {
     try {
-      const config = JSON.parse(readFileSync(localConfigPath, 'utf-8'));
+      const config = JSON.parse(readFileSync(configPath, 'utf-8'));
       if (config.url) {
-        console.error(`Using PocketBase URL from local config: ${config.url}`);
+        console.error(`Using PocketBase URL from config ${configFileName}: ${config.url}`);
         return config.url;
       }
     } catch (e) {
-      console.error('Error reading local config:', e);
+      console.error(`Error reading config file ${configFileName}:`, e);
     }
+  } else if (existsSync(defaultConfigPath)) {
+    try {
+      const config = JSON.parse(readFileSync(defaultConfigPath, 'utf-8'));
+      if (config.url) {
+        console.error(`Using PocketBase URL from config .pocketbase-mcp.json (fallback): ${config.url}`);
+        return config.url;
+      }
+    } catch (e) {
+      console.error('Error reading config file .pocketbase-mcp.json:', e);
+    }
+  } else {
+    console.error(`No config file found. Checked: ${configFileName}, .pocketbase-mcp.json`);
   }
 
   // 2. Check environment variables

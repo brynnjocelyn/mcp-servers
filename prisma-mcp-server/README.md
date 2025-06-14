@@ -46,9 +46,35 @@ npm run build
 
 The Prisma MCP server can be configured in three ways (in order of precedence):
 
-1. **Local configuration file** (`.prisma-mcp.json`)
+1. **Local configuration file** (`.prisma-mcp.json` or instance-specific)
 2. **Environment variables**
 3. **Default values**
+
+### Multiple Instance Support
+
+The Prisma MCP server supports running multiple instances with different configurations using the `MCP_SERVER_NAME` environment variable. This is useful for:
+
+- **Multi-environment setups** (development, staging, production)
+- **Multiple database connections** (different schemas, databases)
+- **Monorepo projects** with separate Prisma configurations
+- **Claude Code CLI usage** with named instances
+
+**Example: Multiple database environments**
+
+```bash
+# Create instance-specific config files
+echo '{"databaseUrl":"postgresql://dev@localhost/app_dev","schemaPath":"./prisma-dev/schema.prisma"}' > .dev-prisma.json
+echo '{"databaseUrl":"postgresql://prod@localhost/app_prod","schemaPath":"./prisma-prod/schema.prisma"}' > .prod-prisma.json
+
+# Run with instance names
+MCP_SERVER_NAME=dev-prisma node dist/mcp-server.js
+MCP_SERVER_NAME=prod-prisma node dist/mcp-server.js
+```
+
+**Configuration File Resolution:**
+1. **Instance-specific**: `.{MCP_SERVER_NAME}.json` (e.g., `.my-database.json`)
+2. **Default fallback**: `.prisma-mcp.json`
+3. **Environment variables**: Always available as fallback
 
 ### Configuration File (.prisma-mcp.json)
 
@@ -63,6 +89,24 @@ Create a `.prisma-mcp.json` file in your project directory:
   "connectionLimit": 10
 }
 ```
+
+**For Monorepo/Subdirectory Projects:**
+
+If your Prisma project is in a subdirectory:
+
+```json
+{
+  "projectRoot": "./api",
+  "schemaPath": "./prisma/schema.prisma",
+  "migrationsDir": "./prisma/migrations",
+  "enableLogging": true
+}
+```
+
+The `projectRoot` option:
+- Sets the working directory for all Prisma commands
+- Loads `.env` from the specified directory
+- Ensures Prisma Client is loaded from the correct location
 
 ### Environment Variables
 
@@ -106,7 +150,9 @@ mongodb+srv://USER:PASSWORD@HOST/DATABASE
 sqlserver://HOST:PORT;database=DATABASE;user=USER;password=PASSWORD
 ```
 
-## Usage with Claude Desktop
+## Usage
+
+### Claude Desktop
 
 Add this configuration to your Claude Desktop MCP settings:
 
@@ -121,6 +167,65 @@ Add this configuration to your Claude Desktop MCP settings:
       }
     }
   }
+}
+```
+
+**Multiple Instances in Claude Desktop:**
+
+```json
+{
+  "mcpServers": {
+    "prisma-dev": {
+      "command": "/path/to/prisma-mcp-server/dist/mcp-server.js",
+      "env": {
+        "MCP_SERVER_NAME": "dev-db",
+        "DATABASE_URL": "postgresql://user:pass@localhost:5432/app_dev"
+      }
+    },
+    "prisma-prod": {
+      "command": "/path/to/prisma-mcp-server/dist/mcp-server.js",
+      "env": {
+        "MCP_SERVER_NAME": "prod-db",
+        "DATABASE_URL": "postgresql://user:pass@localhost:5432/app_prod"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+With Claude Code, use the `MCP_SERVER_NAME` environment variable to specify which configuration to load:
+
+```bash
+# Development database
+MCP_SERVER_NAME=dev-db node dist/mcp-server.js
+
+# Production database
+MCP_SERVER_NAME=prod-db node dist/mcp-server.js
+
+# Different schema files
+MCP_SERVER_NAME=api-schema node dist/mcp-server.js
+```
+
+Create corresponding config files:
+```bash
+# .dev-db.json
+{
+  "databaseUrl": "postgresql://dev@localhost:5432/app_dev",
+  "schemaPath": "./apps/api/prisma/schema.prisma"
+}
+
+# .prod-db.json
+{
+  "databaseUrl": "postgresql://prod@prod-server:5432/app_prod", 
+  "schemaPath": "./apps/api/prisma/schema.prisma"
+}
+
+# .api-schema.json
+{
+  "projectRoot": "./apps/api",
+  "databaseUrl": "postgresql://api@localhost:5432/api_db"
 }
 ```
 
@@ -397,8 +502,20 @@ chmod +x dist/mcp-server.js
 4. **Data Access**: Implement proper access controls
 5. **Connection Security**: Use SSL/TLS for remote databases
 
+## Changelog
+
+### Version 1.1.2 (June 11, 2025)
+- Fixed path duplication issue when using projectRoot
+- Schema path now correctly handled as relative to cwd when executing Prisma commands
+- Added proper handling for both absolute and relative schema paths
+
+### Version 1.1.1 (June 11, 2025)
+- Fixed `projectRoot` working directory issue for monorepo/subdirectory projects
+- Prisma commands now correctly execute from the specified project root
+- Schema path is now properly resolved relative to project root
+
 ## License
 
 ISC
 
-Last Updated On: 2025-06-06
+Last Updated On: June 14, 2025

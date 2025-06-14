@@ -10,6 +10,21 @@ The Prisma MCP Server can be configured in three ways (in order of precedence):
 2. **Environment variables**
 3. **Default values**
 
+## Configuration Options
+
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `projectRoot` | string | Root directory of your Prisma project (supports relative paths) | Current working directory |
+| `databaseUrl` | string | Database connection URL | Value from DATABASE_URL env var |
+| `databaseProvider` | string | Database provider (auto-detected from URL) | Auto-detected |
+| `schemaPath` | string | Path to Prisma schema file (relative to projectRoot) | `./prisma/schema.prisma` |
+| `migrationsDir` | string | Path to migrations directory (relative to projectRoot) | `./prisma/migrations` |
+| `enableLogging` | boolean | Enable Prisma query logging | false |
+| `connectionLimit` | number | Database connection pool limit | 10 |
+| `ssl` | object | SSL/TLS configuration | undefined |
+| `pool` | object | Connection pool configuration | undefined |
+| `connection` | object | Alternative connection format | undefined |
+
 ## Basic Configuration Examples
 
 ### PostgreSQL Configuration
@@ -175,6 +190,22 @@ export DATABASE_URL="file:./dev.db"
 postgresql://user:password@host:5432/database?sslmode=require&sslcert=./certs/client-cert.pem&sslkey=./certs/client-key.pem&sslrootcert=./certs/ca-cert.pem
 ```
 
+### Enhanced SSL Configuration
+
+**.prisma-mcp.json:**
+```json
+{
+  "databaseUrl": "postgresql://user:password@host:5432/database",
+  "ssl": {
+    "enabled": true,
+    "rejectUnauthorized": true,
+    "ca": "./certs/ca-cert.pem",
+    "cert": "./certs/client-cert.pem",
+    "key": "./certs/client-key.pem"
+  }
+}
+```
+
 ### MySQL with Connection Pool
 
 ```
@@ -197,6 +228,85 @@ file::memory:
 
 ```
 sqlserver://host\\instance:1433;database=mydb;user=sa;password=YourPassword;encrypt=true
+```
+
+## Cloud Provider Configurations
+
+### AWS RDS PostgreSQL
+
+**.prisma-mcp.json:**
+```json
+{
+  "databaseUrl": "postgresql://username:password@mydb.c123456789012.us-east-1.rds.amazonaws.com:5432/dbname",
+  "ssl": {
+    "enabled": true,
+    "rejectUnauthorized": true
+  }
+}
+```
+
+### Supabase
+
+**.prisma-mcp.json:**
+```json
+{
+  "databaseUrl": "postgresql://postgres.username:password@aws-0-us-east-1.pooler.supabase.com:6543/postgres",
+  "ssl": {
+    "enabled": true
+  },
+  "pool": {
+    "max": 20
+  }
+}
+```
+
+### PlanetScale (MySQL)
+
+**.prisma-mcp.json:**
+```json
+{
+  "databaseUrl": "mysql://username:password@aws.connect.psdb.cloud/dbname?ssl={\"rejectUnauthorized\":true}"
+}
+```
+
+### Neon
+
+**.prisma-mcp.json:**
+```json
+{
+  "databaseUrl": "postgresql://username:password@ep-cool-darkness-123456.us-east-2.aws.neon.tech/dbname?sslmode=require"
+}
+```
+
+### Railway
+
+**.prisma-mcp.json:**
+```json
+{
+  "databaseUrl": "postgresql://postgres:password@containers-us-west-123.railway.app:5432/railway",
+  "ssl": {
+    "enabled": true
+  }
+}
+```
+
+### Component-Based Connection
+
+**.prisma-mcp.json:**
+```json
+{
+  "connection": {
+    "host": "mydb.c123456789012.us-east-1.rds.amazonaws.com",
+    "port": 5432,
+    "database": "myapp",
+    "user": "dbuser",
+    "password": "securepassword"
+  },
+  "databaseProvider": "postgresql",
+  "ssl": {
+    "enabled": true
+  }
+}
 ```
 
 ## Advanced Configurations
@@ -295,6 +405,71 @@ For specific timezone:
 postgresql://user:password@host:5432/db?timezone=UTC
 ```
 
+## Monorepo and Subdirectory Configuration
+
+When your Prisma project is in a subdirectory of your main project (common in monorepos), use the `projectRoot` option:
+
+### Basic Subdirectory Setup
+
+**.prisma-mcp.json:**
+```json
+{
+  "projectRoot": "./api",
+  "schemaPath": "./prisma/schema.prisma",
+  "migrationsDir": "./prisma/migrations"
+}
+```
+
+This configuration:
+- Sets the working directory to `./api` relative to where the MCP server starts
+- Loads the `.env` file from `./api/.env` (if it exists)
+- Runs all Prisma commands from the `./api` directory
+- Loads the generated Prisma Client from `./api/node_modules/@prisma/client`
+
+### Full Monorepo Example
+
+For a project structure like:
+```
+my-app/
+├── frontend/
+├── backend/
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   └── migrations/
+│   ├── .env
+│   └── node_modules/
+└── .prisma-mcp.json
+```
+
+**.prisma-mcp.json:**
+```json
+{
+  "projectRoot": "./backend",
+  "schemaPath": "./prisma/schema.prisma",
+  "enableLogging": true
+}
+```
+
+### Absolute Path Configuration
+
+You can also use absolute paths:
+
+```json
+{
+  "projectRoot": "/Users/username/projects/my-app/api",
+  "schemaPath": "./prisma/schema.prisma"
+}
+```
+
+### Environment Variable Loading
+
+When `projectRoot` is specified, the server will:
+1. First look for `.env` in the project root directory
+2. Load environment variables from that file
+3. Use those variables for DATABASE_URL and other configuration
+
+This eliminates the need for symlinks or duplicate `.env` files.
+
 ## Security Best Practices
 
 1. **Never commit credentials**: Use environment variables for sensitive data
@@ -303,4 +478,4 @@ postgresql://user:password@host:5432/db?timezone=UTC
 4. **Rotate credentials**: Regularly update database passwords
 5. **Use connection pooling**: Prevent connection exhaustion attacks
 
-Last Updated On: 2025-06-06
+Last Updated On: June 14, 2025

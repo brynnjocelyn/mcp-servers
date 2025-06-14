@@ -46,13 +46,145 @@ npm install
 npm run build
 ```
 
+## Multiple Instance Support
+
+The Proxmox MCP server supports running multiple instances with different configurations by using the `MCP_SERVER_NAME` environment variable. This enables you to manage multiple Proxmox clusters or use different configurations for different virtualization environments.
+
+### Instance-Specific Configuration
+
+When `MCP_SERVER_NAME` is set, the server will look for a configuration file named `.{MCP_SERVER_NAME}-proxmox-mcp.json` instead of the default `.proxmox-mcp.json`.
+
+**Example: Multiple Proxmox Clusters**
+```bash
+# Production Proxmox cluster
+export MCP_SERVER_NAME=prod
+# Uses: .prod-proxmox-mcp.json
+
+# Development Proxmox cluster
+export MCP_SERVER_NAME=dev
+# Uses: .dev-proxmox-mcp.json
+
+# Testing cluster
+export MCP_SERVER_NAME=test
+# Uses: .test-proxmox-mcp.json
+```
+
+### Configuration File Resolution
+
+The server resolves configuration in this order:
+1. **Instance-specific config**: `.{MCP_SERVER_NAME}-proxmox-mcp.json` (if MCP_SERVER_NAME is set)
+2. **Default config file**: `.proxmox-mcp.json`
+3. **Environment variables**
+4. **Default values**
+
+### Benefits of Multiple Instances
+
+- **Multi-cluster**: Manage production, development, and testing Proxmox clusters
+- **Environment isolation**: Separate configurations for different virtualization environments
+- **Client management**: Different Proxmox setups for different clients or projects
+- **Geographic distribution**: Different Proxmox clusters in different data centers
+- **Claude Code**: Perfect for managing multiple virtualization infrastructures
+
+### Example: Multiple Proxmox Clusters
+
+**.prod-proxmox-mcp.json** (Production):
+```json
+{
+  "host": "prod-proxmox.example.com",
+  "port": 8006,
+  "username": "automation",
+  "realm": "pve",
+  "tokenId": "prod-mcp-token",
+  "tokenSecret": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "verifySsl": true,
+  "timeout": 30000
+}
+```
+
+**.dev-proxmox-mcp.json** (Development):
+```json
+{
+  "host": "dev-proxmox.local",
+  "port": 8006,
+  "username": "root",
+  "password": "dev-password",
+  "realm": "pam",
+  "verifySsl": false,
+  "timeout": 60000
+}
+```
+
+**.test-proxmox-mcp.json** (Testing):
+```json
+{
+  "host": "test-proxmox.lab",
+  "port": 8006,
+  "username": "test-user",
+  "realm": "pve",
+  "tokenId": "test-token",
+  "tokenSecret": "test-secret-here",
+  "verifySsl": false,
+  "timeout": 120000
+}
+```
+
+### Claude Code Usage
+
+With Claude Code, you can easily switch between Proxmox clusters:
+
+```bash
+# Work with production cluster
+MCP_SERVER_NAME=prod claude-code "List all VMs and their status"
+
+# Work with development cluster
+MCP_SERVER_NAME=dev claude-code "Create test VM from template"
+
+# Work with testing cluster
+MCP_SERVER_NAME=test claude-code "Run backup operations on all containers"
+
+# Default cluster
+claude-code "Check cluster health and node status"
+```
+
+### Claude Desktop Integration
+
+For Claude Desktop, configure multiple Proxmox servers:
+
+```json
+{
+  "mcpServers": {
+    "proxmox-prod": {
+      "command": "/path/to/proxmox-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "MCP_SERVER_NAME": "prod"
+      }
+    },
+    "proxmox-dev": {
+      "command": "/path/to/proxmox-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "MCP_SERVER_NAME": "dev"
+      }
+    },
+    "proxmox-test": {
+      "command": "/path/to/proxmox-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "MCP_SERVER_NAME": "test"
+      }
+    },
+    "proxmox": {
+      "command": "/path/to/proxmox-mcp-server/dist/mcp-server.js",
+      "args": []
+    }
+  }
+}
+```
+
 ## Configuration
 
-The Proxmox MCP server can be configured in three ways (in order of precedence):
-
-1. **Local configuration file** (`.proxmox-mcp.json`)
-2. **Environment variables**
-3. **Default values**
+The Proxmox MCP server can be configured in multiple ways (in order of precedence):
 
 ### Configuration File (.proxmox-mcp.json)
 
@@ -454,4 +586,4 @@ chmod +x dist/mcp-server.js
 
 ISC
 
-Last Updated On: 2025-06-06
+Last Updated On: June 14, 2025

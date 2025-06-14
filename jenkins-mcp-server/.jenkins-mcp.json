@@ -1,0 +1,9 @@
+{
+  "url": "http://10.27.27.36:8080",
+  "username": "brynn",
+  "apiToken": "115874b736b25de856e91a028afb187039",
+  "timeout": 30000,
+  "verifySsl": false,
+  "maxRetries": 3
+}
+

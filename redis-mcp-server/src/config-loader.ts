@@ -47,18 +47,34 @@ interface RedisConfig {
  * Priority: local config file > environment variables > defaults
  */
 export function loadConfig(): RedisConfig {
-  // Check for local config file
-  const configPath = join(process.cwd(), '.redis-mcp.json');
+  // Determine config file name - check for MCP instance name first
+  const mcpServerName = process.env.MCP_SERVER_NAME || 'redis-mcp';
+  const configFileName = `.${mcpServerName}.json`;
+  const configPath = join(process.cwd(), configFileName);
+  
+  // Fallback to default name if custom name doesn't exist
+  const defaultConfigPath = join(process.cwd(), '.redis-mcp.json');
+  
   let fileConfig: Partial<RedisConfig> = {};
   
   if (existsSync(configPath)) {
     try {
       const configData = readFileSync(configPath, 'utf-8');
       fileConfig = JSON.parse(configData);
-      console.error('Loaded config from .redis-mcp.json');
+      console.error(`Loaded config from ${configFileName}`);
     } catch (error) {
-      console.error('Error reading config file:', error);
+      console.error(`Error reading config file ${configFileName}:`, error);
     }
+  } else if (existsSync(defaultConfigPath)) {
+    try {
+      const configData = readFileSync(defaultConfigPath, 'utf-8');
+      fileConfig = JSON.parse(configData);
+      console.error('Loaded config from .redis-mcp.json (fallback)');
+    } catch (error) {
+      console.error('Error reading config file .redis-mcp.json:', error);
+    }
+  } else {
+    console.error(`No config file found. Checked: ${configFileName}, .redis-mcp.json`);
   }
 
   // Check for Redis URL (common in cloud environments)

@@ -2,13 +2,91 @@
 
 This document provides various configuration examples for different Proxmox VE setups and use cases.
 
+## Multiple Instance Support
+
+The Proxmox MCP server supports running multiple instances with different configurations by using the `MCP_SERVER_NAME` environment variable. This enables you to manage multiple Proxmox clusters or use different configurations for different virtualization environments.
+
+### Instance-Specific Configuration
+
+When `MCP_SERVER_NAME` is set, the server will look for a configuration file named `.{MCP_SERVER_NAME}-proxmox-mcp.json` instead of the default `.proxmox-mcp.json`.
+
+**Example: Multiple Proxmox Clusters**
+```bash
+# Production cluster
+export MCP_SERVER_NAME=prod
+# Uses: .prod-proxmox-mcp.json
+
+# Development cluster
+export MCP_SERVER_NAME=dev
+# Uses: .dev-proxmox-mcp.json
+
+# Testing cluster
+export MCP_SERVER_NAME=test
+# Uses: .test-proxmox-mcp.json
+```
+
+### Configuration File Resolution
+
+The server resolves configuration in this order:
+1. **Instance-specific config**: `.{MCP_SERVER_NAME}-proxmox-mcp.json` (if MCP_SERVER_NAME is set)
+2. **Default config file**: `.proxmox-mcp.json`
+3. **Environment variables**
+4. **Default values**
+
+### Benefits of Multiple Instances
+
+- **Multi-cluster**: Manage production, development, and testing Proxmox clusters
+- **Environment isolation**: Separate configurations for different infrastructure purposes
+- **Client separation**: Different Proxmox environments for different clients or teams
+- **Geographic distribution**: Multiple data centers with different Proxmox clusters
+- **Claude Code**: Perfect for managing multiple virtualization infrastructures
+
+## Instance-Specific Configuration Examples
+
+**.prod-proxmox-mcp.json** (Production Cluster):
+```json
+{
+  "host": "prod-proxmox.example.com",
+  "port": 8006,
+  "username": "automation",
+  "realm": "pve",
+  "tokenId": "prod-mcp-token",
+  "tokenSecret": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "verifySsl": true,
+  "timeout": 30000
+}
+```
+
+**.dev-proxmox-mcp.json** (Development Cluster):
+```json
+{
+  "host": "dev-proxmox.local",
+  "port": 8006,
+  "username": "root",
+  "password": "dev-password",
+  "realm": "pam",
+  "verifySsl": false,
+  "timeout": 60000
+}
+```
+
+**.test-proxmox-mcp.json** (Testing Lab):
+```json
+{
+  "host": "test-proxmox.lab",
+  "port": 8006,
+  "username": "test-user",
+  "realm": "pve",
+  "tokenId": "test-token",
+  "tokenSecret": "test-secret-here",
+  "verifySsl": false,
+  "timeout": 120000
+}
+```
+
 ## Configuration Methods
 
-The Proxmox MCP Server can be configured in three ways (in order of precedence):
-
-1. **Local configuration file** (`.proxmox-mcp.json`)
-2. **Environment variables**
-3. **Default values**
+The Proxmox MCP Server can be configured in multiple ways (in order of precedence):
 
 ## Basic Configuration Examples
 
@@ -368,4 +446,35 @@ Increase timeout for slow operations:
 6. **Limit permissions** to minimum required for the use case
 7. **Use separate tokens** for different environments
 
-Last Updated On: 2025-06-06
+## Claude Code Usage Examples
+
+### Multiple Proxmox Clusters with Claude Code
+
+```bash
+# Production cluster management
+MCP_SERVER_NAME=prod claude-code "Check cluster status and VM health"
+
+# Development environment
+MCP_SERVER_NAME=dev claude-code "Create test VM from Ubuntu template"
+
+# Testing cluster operations
+MCP_SERVER_NAME=test claude-code "Run backup operations on all containers"
+
+# Default cluster
+claude-code "List all storage locations and their usage"
+```
+
+### Environment-Specific Virtualization Operations
+
+```bash
+# Production: Monitoring and maintenance
+MCP_SERVER_NAME=prod claude-code "Generate infrastructure status report"
+
+# Development: VM provisioning
+MCP_SERVER_NAME=dev claude-code "Deploy development environment VMs"
+
+# Testing: Performance validation
+MCP_SERVER_NAME=test claude-code "Test VM migration between nodes"
+```
+
+Last Updated On: June 14, 2025

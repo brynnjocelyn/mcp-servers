@@ -2,13 +2,87 @@
 
 This document provides various configuration examples for different Cloudflare setups and use cases.
 
+## Multiple Instance Support
+
+The Cloudflare MCP server supports running multiple instances with different configurations by using the `MCP_SERVER_NAME` environment variable. This enables you to manage multiple Cloudflare accounts or use different configurations for different environments.
+
+### Instance-Specific Configuration
+
+When `MCP_SERVER_NAME` is set, the server will look for a configuration file named `.{MCP_SERVER_NAME}-cloudflare-mcp.json` instead of the default `.cloudflare-mcp.json`.
+
+**Example: Multiple Cloudflare Accounts**
+```bash
+# Personal Cloudflare account
+export MCP_SERVER_NAME=personal
+# Uses: .personal-cloudflare-mcp.json
+
+# Work/Company account
+export MCP_SERVER_NAME=work
+# Uses: .work-cloudflare-mcp.json
+
+# Client account
+export MCP_SERVER_NAME=client
+# Uses: .client-cloudflare-mcp.json
+```
+
+### Configuration File Resolution
+
+The server resolves configuration in this order:
+1. **Instance-specific config**: `.{MCP_SERVER_NAME}-cloudflare-mcp.json` (if MCP_SERVER_NAME is set)
+2. **Default config file**: `.cloudflare-mcp.json`
+3. **Environment variables**
+4. **Default values**
+
+### Benefits of Multiple Instances
+
+- **Multi-account**: Manage personal, work, and client Cloudflare accounts separately
+- **Environment isolation**: Separate dev, staging, and production configurations
+- **Team collaboration**: Different team members with different Cloudflare access
+- **Client management**: Agencies managing multiple client accounts
+- **Service separation**: Different projects with different Cloudflare requirements
+- **Claude Code**: Perfect for managing multiple projects with different Cloudflare setups
+
 ## Configuration Methods
 
-The Cloudflare MCP Server can be configured in three ways (in order of precedence):
+The Cloudflare MCP Server can be configured in multiple ways (in order of precedence):
 
-1. **Local configuration file** (`.cloudflare-mcp.json`)
-2. **Environment variables**
-3. **Default values**
+## Instance-Specific Configuration Examples
+
+**.personal-cloudflare-mcp.json** (Personal Account):
+```json
+{
+  "apiToken": "personal-api-token-here",
+  "accountId": "personal-account-id"
+}
+```
+
+**.work-cloudflare-mcp.json** (Work Account):
+```json
+{
+  "apiToken": "work-api-token-here",
+  "accountId": "work-account-id",
+  "zoneId": "work-primary-zone-id",
+  "timeout": 45000
+}
+```
+
+**.client-cloudflare-mcp.json** (Client Account):
+```json
+{
+  "apiToken": "client-api-token-here", 
+  "accountId": "client-account-id",
+  "timeout": 30000
+}
+```
+
+**.dev-cloudflare-mcp.json** (Development):
+```json
+{
+  "apiToken": "dev-api-token-here",
+  "accountId": "dev-account-id",
+  "timeout": 60000
+}
+```
 
 ## Basic Configuration Examples
 
@@ -75,7 +149,44 @@ export CLOUDFLARE_ACCOUNT_ID=your-account-id
 }
 ```
 
-### Multiple Accounts/Environments
+### Multiple Accounts with Instance-Specific Configs
+
+```json
+{
+  "mcpServers": {
+    "cloudflare-personal": {
+      "command": "/path/to/cloudflare-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "MCP_SERVER_NAME": "personal"
+      }
+    },
+    "cloudflare-work": {
+      "command": "/path/to/cloudflare-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "MCP_SERVER_NAME": "work"
+      }
+    },
+    "cloudflare-client": {
+      "command": "/path/to/cloudflare-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "MCP_SERVER_NAME": "client"
+      }
+    },
+    "cloudflare-dev": {
+      "command": "/path/to/cloudflare-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "MCP_SERVER_NAME": "dev"
+      }
+    }
+  }
+}
+```
+
+### Multiple Accounts/Environments (Legacy Environment Variables)
 
 ```json
 {
@@ -368,4 +479,38 @@ export CLOUDFLARE_API_TOKEN=your-token
 5. **Secure Storage**: Never commit tokens to version control
 6. **IP Restrictions**: Add IP allowlists to tokens when possible
 
-Last Updated On: 2025-06-06
+## Claude Code Usage Examples
+
+### Multiple Cloudflare Accounts with Claude Code
+
+```bash
+# Manage personal domains
+MCP_SERVER_NAME=personal claude-code "List all zones and their SSL status"
+
+# Work on company infrastructure
+MCP_SERVER_NAME=work claude-code "Update DNS records for the staging environment"
+
+# Client account management
+MCP_SERVER_NAME=client claude-code "Deploy Workers script and configure caching rules"
+
+# Development environment
+MCP_SERVER_NAME=dev claude-code "Test firewall rules and check security settings"
+
+# Default account
+claude-code "Get Cloudflare analytics and performance metrics"
+```
+
+### Environment-Specific Operations
+
+```bash
+# Personal: Domain management
+MCP_SERVER_NAME=personal claude-code "Add DNS record for new subdomain"
+
+# Work: Infrastructure automation
+MCP_SERVER_NAME=work claude-code "Purge cache for production deployment"
+
+# Client: Service delivery
+MCP_SERVER_NAME=client claude-code "Configure WAF rules for security compliance"
+```
+
+Last Updated On: June 14, 2025

@@ -6,9 +6,25 @@ This document provides configuration examples for the S3 MCP Server.
 
 The S3 MCP Server can be configured in three ways (in order of precedence):
 
-1. **Local configuration file** (`.s3-mcp.json`)
+1. **Local configuration file** (instance-specific or default)
 2. **Environment variables**
 3. **Default values**
+
+### Config File Naming
+
+The server supports **instance-specific configuration** using the `MCP_SERVER_NAME` environment variable. This allows you to run multiple S3 MCP servers with different configurations.
+
+**Configuration File Resolution:**
+1. **Instance-specific**: `.{MCP_SERVER_NAME}.json` (e.g., `.btd-minio-mcp.json`)
+2. **Default fallback**: `.s3-mcp.json`
+
+**Benefits of Instance-Specific Configs:**
+- **Multiple storage providers** (AWS S3, MinIO, DigitalOcean Spaces)
+- **Environment separation** (dev, staging, production)
+- **Project isolation** (different buckets for different projects)
+- **Claude Code compatibility** (CLI-based usage)
+
+To use instance-specific config files, set the `MCP_SERVER_NAME` environment variable.
 
 ## Configuration File Examples
 
@@ -134,6 +150,120 @@ The S3 MCP Server can be configured in three ways (in order of precedence):
   "partSize": 5242880
 }
 ```
+
+## Client Integration Examples
+
+### Claude Desktop Configuration
+
+#### Single Instance (Default Config File)
+
+```json
+{
+  "mcpServers": {
+    "s3": {
+      "command": "node",
+      "args": ["/path/to/s3-mcp-server/dist/mcp-server.js"],
+      "env": {
+        "MINIO_ENDPOINT": "localhost:9000",
+        "MINIO_ACCESS_KEY": "minioadmin",
+        "MINIO_SECRET_KEY": "minioadmin"
+      }
+    }
+  }
+}
+```
+
+#### Multiple Instances (Instance-Specific Config Files)
+
+```json
+{
+  "mcpServers": {
+    "btd-minio-mcp": {
+      "command": "node",
+      "args": ["/path/to/s3-mcp-server/dist/mcp-server.js"],
+      "env": {
+        "MCP_SERVER_NAME": "btd-minio-mcp"
+      }
+    },
+    "lhai-s3-mcp": {
+      "command": "node", 
+      "args": ["/path/to/s3-mcp-server/dist/mcp-server.js"],
+      "env": {
+        "MCP_SERVER_NAME": "lhai-s3-mcp"
+      }
+    },
+    "prod-s3-mcp": {
+      "command": "node",
+      "args": ["/path/to/s3-mcp-server/dist/mcp-server.js"],
+      "env": {
+        "MCP_SERVER_NAME": "prod-s3-mcp"
+      }
+    }
+  }
+}
+```
+
+With the above configuration, each instance will look for its own config file:
+- `btd-minio-mcp` → `.btd-minio-mcp.json`
+- `lhai-s3-mcp` → `.lhai-s3-mcp.json`
+- `prod-s3-mcp` → `.prod-s3-mcp.json`
+
+### Claude Code Configuration
+
+With Claude Code, use the `MCP_SERVER_NAME` environment variable:
+
+```bash
+# Development MinIO
+MCP_SERVER_NAME=dev-minio node dist/mcp-server.js
+
+# Production AWS S3
+MCP_SERVER_NAME=prod-s3 node dist/mcp-server.js
+
+# Images bucket
+MCP_SERVER_NAME=images-storage node dist/mcp-server.js
+
+# Documents bucket  
+MCP_SERVER_NAME=docs-storage node dist/mcp-server.js
+```
+
+Create corresponding config files:
+
+```bash
+# .dev-minio.json
+{
+  "endPoint": "localhost",
+  "port": 9000,
+  "useSSL": false,
+  "accessKey": "dev-key",
+  "secretKey": "dev-secret",
+  "pathStyle": true
+}
+
+# .prod-s3.json
+{
+  "endPoint": "s3.amazonaws.com", 
+  "port": 443,
+  "useSSL": true,
+  "accessKey": "AKIAIOSFODNN7EXAMPLE",
+  "secretKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+  "region": "us-east-1",
+  "pathStyle": false
+}
+
+# .images-storage.json
+{
+  "endPoint": "nyc3.digitaloceanspaces.com",
+  "port": 443,
+  "useSSL": true,
+  "accessKey": "spaces-images-key",
+  "secretKey": "spaces-images-secret",
+  "region": "nyc3"
+}
+```
+
+### Working Directory Considerations
+
+Config files are searched for in the current working directory where the MCP server is running from. Make sure your instance-specific config files are in the correct project root or specify absolute paths.
 
 ## Environment Variables
 
@@ -354,4 +484,4 @@ The MinIO client handles connection pooling automatically, but you can influence
 - Proper error handling and retry logic
 - Avoiding connection leaks
 
-Last Updated On: 2025-06-05
+Last Updated On: 2025-06-14

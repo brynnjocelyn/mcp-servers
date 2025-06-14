@@ -1,0 +1,38 @@
+{
+  "name": "ansible-mcp-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for Ansible automation - manage playbooks, inventories, and orchestrate infrastructure",
+  "main": "dist/mcp-server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/mcp-server.js",
+    "dev": "tsx src/mcp-server.ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "ansible",
+    "automation",
+    "infrastructure",
+    "devops",
+    "proxmox"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "glob": "^10.3.10",
+    "js-yaml": "^4.1.0",
+    "sqlite3": "^5.1.7",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.1"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.12.7",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  }
+}

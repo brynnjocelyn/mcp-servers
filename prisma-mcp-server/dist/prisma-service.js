@@ -4,6 +4,7 @@ exports.PrismaService = void 0;
 const child_process_1 = require("child_process");
 const util_1 = require("util");
 const fs_1 = require("fs");
+const path_1 = require("path");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 /**
  * Service for managing Prisma operations
@@ -11,20 +12,23 @@ const execAsync = (0, util_1.promisify)(child_process_1.exec);
 class PrismaService {
     schemaPath;
     migrationsDir;
-    constructor(schemaPath, migrationsDir) {
+    projectRoot;
+    constructor(schemaPath, migrationsDir, projectRoot) {
         this.schemaPath = schemaPath;
         this.migrationsDir = migrationsDir;
+        this.projectRoot = projectRoot || process.cwd();
     }
     /**
      * Execute a Prisma CLI command
      */
     async executePrismaCommand(command) {
         try {
-            const { stdout, stderr } = await execAsync(`npx prisma ${command}`, {
-                env: {
-                    ...process.env,
-                    PRISMA_SCHEMA_PATH: this.schemaPath
-                }
+            // Use the schema path directly when executing from the project root
+            // Prisma will look for it relative to the cwd
+            const fullCommand = `npx prisma ${command} --schema="${this.schemaPath}"`;
+            const { stdout, stderr } = await execAsync(fullCommand, {
+                cwd: this.projectRoot,
+                env: process.env
             });
             return { stdout, stderr };
         }
@@ -34,25 +38,39 @@ class PrismaService {
         }
     }
     /**
+     * Get the full schema path, handling both absolute and relative paths
+     */
+    getFullSchemaPath() {
+        // If schemaPath is absolute, use it directly
+        if (this.schemaPath.startsWith('/')) {
+            return this.schemaPath;
+        }
+        // Otherwise, resolve it relative to projectRoot
+        return (0, path_1.join)(this.projectRoot, this.schemaPath);
+    }
+    /**
      * Read the Prisma schema file
      */
     readSchema() {
-        if (!(0, fs_1.existsSync)(this.schemaPath)) {
-            throw new Error(`Schema file not found at ${this.schemaPath}`);
+        const fullSchemaPath = this.getFullSchemaPath();
+        if (!(0, fs_1.existsSync)(fullSchemaPath)) {
+            throw new Error(`Schema file not found at ${fullSchemaPath}`);
         }
-        return (0, fs_1.readFileSync)(this.schemaPath, 'utf-8');
+        return (0, fs_1.readFileSync)(fullSchemaPath, 'utf-8');
     }
     /**
      * Write to the Prisma schema file
      */
     writeSchema(content) {
-        (0, fs_1.writeFileSync)(this.schemaPath, content, 'utf-8');
+        const fullSchemaPath = this.getFullSchemaPath();
+        (0, fs_1.writeFileSync)(fullSchemaPath, content, 'utf-8');
     }
     /**
      * Check if schema file exists
      */
     schemaExists() {
-        return (0, fs_1.existsSync)(this.schemaPath);
+        const fullSchemaPath = this.getFullSchemaPath();
+        return (0, fs_1.existsSync)(fullSchemaPath);
     }
     /**
      * Initialize a new Prisma project

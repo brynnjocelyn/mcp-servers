@@ -8,11 +8,16 @@ export interface ExecResult {
 export declare class PrismaService {
     private schemaPath;
     private migrationsDir;
-    constructor(schemaPath: string, migrationsDir: string);
+    private projectRoot;
+    constructor(schemaPath: string, migrationsDir: string, projectRoot?: string);
     /**
      * Execute a Prisma CLI command
      */
     executePrismaCommand(command: string): Promise<ExecResult>;
+    /**
+     * Get the full schema path, handling both absolute and relative paths
+     */
+    private getFullSchemaPath;
     /**
      * Read the Prisma schema file
      */

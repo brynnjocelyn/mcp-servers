@@ -1,0 +1,7 @@
+{
+  "projectRoot": "./ionic-btd-api",
+  "schemaPath": "./prisma/schema.prisma",
+  "migrationsDir": "./prisma/migrations",
+  "enableLogging": true,
+  "connectionLimit": 10
+}

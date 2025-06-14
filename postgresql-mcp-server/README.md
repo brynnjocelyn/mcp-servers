@@ -73,6 +73,32 @@ npm run build
 
 The PostgreSQL MCP server supports all standard PostgreSQL authentication methods including password, SSL/TLS, certificate-based authentication, and more.
 
+### Multiple Instance Support
+
+The PostgreSQL MCP server supports running multiple instances with different configurations using the `MCP_SERVER_NAME` environment variable. This is useful for:
+
+- **Multi-environment setups** (development, staging, production)
+- **Multiple database connections** (different schemas, databases)
+- **Microservices architectures** with separate databases
+- **Claude Code CLI usage** with named instances
+
+**Example: Multiple database environments**
+
+```bash
+# Create instance-specific config files
+echo '{"host":"dev-db","database":"app_dev","user":"dev_user"}' > .dev-postgres.json
+echo '{"host":"prod-db","database":"app_prod","user":"prod_user"}' > .prod-postgres.json
+
+# Run with instance names
+MCP_SERVER_NAME=dev-postgres node dist/mcp-server.js
+MCP_SERVER_NAME=prod-postgres node dist/mcp-server.js
+```
+
+**Configuration File Resolution:**
+1. **Instance-specific**: `.{MCP_SERVER_NAME}.json` (e.g., `.my-database.json`)
+2. **Default fallback**: `.postgresql-mcp.json`
+3. **Environment variables**: Always available as fallback
+
 ### Quick Configuration
 
 **Option 1: Environment Variables**
@@ -93,6 +119,26 @@ export PGPASSWORD=mypassword
   "user": "myuser",
   "password": "mypassword",
   "ssl": false
+}
+```
+
+**Option 3: Instance-Specific Configuration**
+```bash
+# .dev-db.json
+{
+  "host": "dev-postgres",
+  "database": "app_dev", 
+  "user": "dev_user",
+  "password": "dev_pass"
+}
+
+# .prod-db.json
+{
+  "host": "prod-postgres",
+  "database": "app_prod",
+  "user": "prod_user", 
+  "password": "prod_pass",
+  "ssl": true
 }
 ```
 

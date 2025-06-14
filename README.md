@@ -4,7 +4,7 @@ A collection of Model Context Protocol (MCP) servers for integrating databases a
 
 ## Overview
 
-This repository contains seven comprehensive MCP servers:
+This repository contains eleven comprehensive MCP servers:
 
 - **[PostgreSQL MCP Server](./postgresql-mcp-server)** - Full-featured PostgreSQL database management (25+ tools)
 - **[Redis MCP Server](./redis-mcp-server)** - Complete Redis operations and data structures (70+ tools)
@@ -13,6 +13,10 @@ This repository contains seven comprehensive MCP servers:
 - **[Prisma MCP Server](./prisma-mcp-server)** - Universal database ORM supporting PostgreSQL, MySQL, SQLite, MongoDB, and more (25+ tools)
 - **[Proxmox MCP Server](./proxmox-mcp-server)** - Proxmox VE virtualization platform management for VMs, containers, and infrastructure (30+ tools)
 - **[Cloudflare MCP Server](./cloudflare-mcp-server)** - Complete Cloudflare services management including DNS, security, Workers, and R2 storage (40+ tools)
+- **[LinkedIn MCP Server](./linkedin-mcp-server)** - LinkedIn integration for sharing posts, managing content, and social media automation (12+ tools)
+- **[Ansible MCP Server](./ansible-mcp-server)** - Ansible automation with playbook execution, inventory management, and infrastructure orchestration (17+ tools)
+- **[Ceph MCP Server](./ceph-mcp-server)** - Ceph distributed storage cluster management including pools, OSDs, RBD, CephFS, and S3 gateway (25+ tools)
+- **[Jenkins MCP Server](./jenkins-mcp-server)** - Jenkins CI/CD automation with job management, build operations, and pipeline support (23+ tools)
 
 Each server implements the Model Context Protocol specification, enabling LLMs to interact with these services through standardized tools.
 
@@ -29,6 +33,10 @@ Each server implements the Model Context Protocol specification, enabling LLMs t
   - Any Prisma-supported database for prisma-mcp-server
   - Proxmox VE for proxmox-mcp-server
   - Cloudflare account for cloudflare-mcp-server
+  - LinkedIn account and app credentials for linkedin-mcp-server
+  - Ansible 2.9+ for ansible-mcp-server
+  - Ceph cluster and CLI tools for ceph-mcp-server
+  - Jenkins instance for jenkins-mcp-server
 
 ### Installation
 
@@ -75,11 +83,60 @@ npm run build
 cd ../cloudflare-mcp-server
 npm install
 npm run build
+
+# LinkedIn MCP Server
+cd ../linkedin-mcp-server
+npm install
+npm run build
+
+# Ansible MCP Server
+cd ../ansible-mcp-server
+npm install
+npm run build
+
+# Ceph MCP Server
+cd ../ceph-mcp-server
+npm install
+npm run build
 ```
 
 ### Configuration
 
-Each server can be configured using environment variables, configuration files, or Claude Desktop settings.
+Each server can be configured using environment variables, configuration files, or Claude Desktop/Claude Code settings.
+
+#### Multiple Instance Support
+
+All MCP servers support running multiple instances with different configurations using the `MCP_SERVER_NAME` environment variable. This is especially useful for:
+
+- **Multi-environment setups** (development, staging, production)
+- **Microservices architectures** with separate databases
+- **Multiple projects** requiring different configurations
+- **Claude Code CLI usage** with named instances
+
+**Example: Multiple PostgreSQL databases**
+
+```bash
+# Create instance-specific config files
+echo '{"host":"dev-db","database":"app_dev"}' > .dev-postgres.json
+echo '{"host":"prod-db","database":"app_prod"}' > .prod-postgres.json
+
+# Run with instance names
+MCP_SERVER_NAME=dev-postgres node postgresql-mcp-server/dist/mcp-server.js
+MCP_SERVER_NAME=prod-postgres node postgresql-mcp-server/dist/mcp-server.js
+```
+
+**Instance Naming Convention:**
+- Primary config: `.{MCP_SERVER_NAME}.json` (e.g., `.my-postgres.json`)
+- Fallback config: `.{service}-mcp.json` (e.g., `.postgresql-mcp.json`)
+- Environment variables remain the same
+
+#### Claude Code vs Claude Desktop
+
+**Claude Code (CLI)**: Supports named instances natively through the server name configuration. Use `MCP_SERVER_NAME` environment variable to specify which configuration to load.
+
+**Claude Desktop**: Configure multiple instances in the JSON config file with different server names and environment variables.
+
+#### Basic Configuration Examples
 
 #### PostgreSQL Configuration
 
@@ -219,7 +276,72 @@ export CLOUDFLARE_API_TOKEN=your-api-token
 export CLOUDFLARE_ACCOUNT_ID=your-account-id
 ```
 
-## Claude Desktop Integration
+#### LinkedIn Configuration
+
+Create `.linkedin-mcp.json` in your project:
+```json
+{
+  "clientId": "your-linkedin-client-id",
+  "clientSecret": "your-linkedin-client-secret",
+  "redirectUri": "http://localhost:3000/callback",
+  "scope": "openid profile email w_member_social"
+}
+```
+
+Or use environment variables:
+```bash
+export LINKEDIN_CLIENT_ID=your-client-id
+export LINKEDIN_CLIENT_SECRET=your-client-secret
+export LINKEDIN_REDIRECT_URI=http://localhost:3000/callback
+```
+
+#### Ansible Configuration
+
+Create `.ansible-mcp.json` in your project:
+```json
+{
+  "inventoryPath": "./inventory",
+  "playbooksPath": "./playbooks",
+  "vaultPasswordFile": "./.vault_pass",
+  "remoteUser": "ansible",
+  "forks": 10,
+  "hostKeyChecking": false
+}
+```
+
+Or use environment variables:
+```bash
+export ANSIBLE_INVENTORY=./inventory
+export ANSIBLE_PLAYBOOKS_PATH=./playbooks
+export ANSIBLE_VAULT_PASSWORD_FILE=./.vault_pass
+export ANSIBLE_HOST_KEY_CHECKING=false
+```
+
+#### Ceph Configuration
+
+Create `.ceph-mcp.json` in your project:
+```json
+{
+  "cluster_name": "ceph",
+  "monitor_hosts": ["mon1.example.com", "mon2.example.com"],
+  "username": "client.admin",
+  "keyring_path": "/etc/ceph/ceph.client.admin.keyring",
+  "pool_name": "default"
+}
+```
+
+Or use environment variables:
+```bash
+export CEPH_CLUSTER_NAME=ceph
+export CEPH_MONITOR_HOSTS="mon1.example.com,mon2.example.com"
+export CEPH_USERNAME=client.admin
+export CEPH_KEYRING_PATH=/etc/ceph/ceph.client.admin.keyring
+export CEPH_POOL_NAME=default
+```
+
+## Client Integration
+
+### Claude Desktop Integration
 
 Add the servers to your Claude Desktop configuration file:
 
@@ -288,21 +410,74 @@ Add the servers to your Claude Desktop configuration file:
       "env": {
         "CLOUDFLARE_API_TOKEN": "your-api-token"
       }
+    },
+    "linkedin": {
+      "command": "/path/to/mcp-servers/linkedin-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {}
+    },
+    "ansible": {
+      "command": "/path/to/mcp-servers/ansible-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "ANSIBLE_INVENTORY": "/path/to/inventory"
+      }
+    },
+    "ceph": {
+      "command": "/path/to/mcp-servers/ceph-mcp-server/dist/mcp-server.js",
+      "args": [],
+      "env": {
+        "CEPH_CLUSTER_NAME": "ceph",
+        "CEPH_MONITOR_HOSTS": "mon1.example.com,mon2.example.com"
+      }
     }
   }
 }
+```
+
+### Claude Code Integration
+
+With Claude Code, you can use named instances by setting the `MCP_SERVER_NAME` environment variable:
+
+```bash
+# Development database
+MCP_SERVER_NAME=dev-db node postgresql-mcp-server/dist/mcp-server.js
+
+# Production database  
+MCP_SERVER_NAME=prod-db node postgresql-mcp-server/dist/mcp-server.js
+
+# Different S3 buckets
+MCP_SERVER_NAME=images-bucket node s3-mcp-server/dist/mcp-server.js
+MCP_SERVER_NAME=docs-bucket node s3-mcp-server/dist/mcp-server.js
+```
+
+Create corresponding config files:
+```bash
+# .dev-db.json
+{"host": "dev-postgres", "database": "app_dev"}
+
+# .prod-db.json  
+{"host": "prod-postgres", "database": "app_prod"}
+
+# .images-bucket.json
+{"endPoint": "s3.amazonaws.com", "accessKey": "...", "region": "us-east-1"}
+
+# .docs-bucket.json
+{"endPoint": "eu.minio.com", "accessKey": "...", "region": "eu-west-1"}
 ```
 
 ## Microservices Architecture Support
 
 For microservices with multiple databases, configure separate named instances:
 
+**Claude Desktop Configuration:**
 ```json
 {
   "mcpServers": {
     "postgres-service1": {
       "command": "/path/to/postgresql-mcp-server/dist/mcp-server.js",
       "env": {
+        "MCP_SERVER_NAME": "service1-db",
         "PGDATABASE": "service1_db",
         "PGPORT": "5432"
       }
@@ -310,6 +485,7 @@ For microservices with multiple databases, configure separate named instances:
     "postgres-service2": {
       "command": "/path/to/postgresql-mcp-server/dist/mcp-server.js",
       "env": {
+        "MCP_SERVER_NAME": "service2-db", 
         "PGDATABASE": "service2_db",
         "PGPORT": "5433"
       }
@@ -318,11 +494,20 @@ For microservices with multiple databases, configure separate named instances:
 }
 ```
 
+**Claude Code Usage:**
+```bash
+# Create config files
+echo '{"host":"service1-db","database":"service1_db"}' > .service1-db.json
+echo '{"host":"service2-db","database":"service2_db"}' > .service2-db.json
+
+# Run with instance names
+MCP_SERVER_NAME=service1-db node postgresql-mcp-server/dist/mcp-server.js
+MCP_SERVER_NAME=service2-db node postgresql-mcp-server/dist/mcp-server.js
+```
+
 Then specify which database in your prompts:
 - "Using postgres-service1, show all users"
 - "Query orders in postgres-service2"
-
-See [Multi-Database Setup Guide](./docs/multi-database-setup.md) for detailed instructions.
 
 ## Features by Server
 
@@ -377,6 +562,32 @@ See [Multi-Database Setup Guide](./docs/multi-database-setup.md) for detailed in
 - **Workers Platform**: Deploy and manage Workers scripts, KV storage, cron triggers
 - **R2 Storage**: S3-compatible object storage management
 - **Zone Management**: Create, configure, and manage Cloudflare zones
+
+### LinkedIn MCP Server
+- **OAuth2 Authentication**: Secure login with automatic token refresh
+- **Content Sharing**: Share text posts, articles, and images on LinkedIn
+- **Post Management**: View, analyze, and delete your LinkedIn posts
+- **Analytics**: Get engagement metrics and post performance data
+- **Company Pages**: Search companies and share content as company admin
+- **Media Upload**: Upload and share images with captions
+
+### Ansible MCP Server
+- **Playbook Execution**: Run playbooks with full option support and history tracking
+- **Inventory Management**: Dynamic inventory with SQLite backend and Proxmox integration
+- **Ad-hoc Commands**: Execute Ansible modules on any host pattern
+- **Playbook Library**: Organize, categorize, and track playbook usage
+- **Vault Integration**: Encrypt/decrypt sensitive data with Ansible Vault
+- **Execution History**: Track all runs with detailed logging and metrics
+- **Galaxy Support**: Install roles and collections from requirements files
+- **Proxmox Import**: Import VMs and containers from Proxmox clusters
+
+### Ceph MCP Server
+- **Cluster Management**: Monitor health, status, configuration, and performance
+- **Pool Operations**: Create, manage, and monitor storage pools
+- **OSD Management**: View and manage Object Storage Daemons
+- **RBD Support**: Full RADOS Block Device management
+- **CephFS Operations**: Monitor metadata servers and filesystems
+- **S3 Gateway**: Manage RADOS Gateway users and buckets
 
 ## Development
 
@@ -463,6 +674,19 @@ Each server has detailed documentation:
   - [Tools Reference](./cloudflare-mcp-server/TOOLS.md)
   - [Config Examples](./cloudflare-mcp-server/CONFIG_EXAMPLES.md)
 
+- [LinkedIn MCP Server](./linkedin-mcp-server/README.md)
+  - [Authentication Guide](./linkedin-mcp-server/AUTHENTICATION.md)
+  - [Tools Reference](./linkedin-mcp-server/TOOLS.md)
+  - [Config Examples](./linkedin-mcp-server/CONFIG_EXAMPLES.md)
+
+- [Ansible MCP Server](./ansible-mcp-server/README.md)
+  - [Tools Reference](./ansible-mcp-server/TOOLS.md)
+  - [Config Examples](./ansible-mcp-server/CONFIG_EXAMPLES.md)
+
+- [Ceph MCP Server](./ceph-mcp-server/README.md)
+  - [Tools Reference](./ceph-mcp-server/TOOLS.md)
+  - [Config Examples](./ceph-mcp-server/CONFIG_EXAMPLES.md)
+
 - [MCP Scopes Documentation](./MCP_SCOPES.md)
 
 ## Contributing
@@ -485,4 +709,4 @@ For issues, questions, or contributions:
 - Check existing documentation
 - Review closed issues for solutions
 
-Last Updated On: 2025-06-05
+Last Updated On: 2025-06-14

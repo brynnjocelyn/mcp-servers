@@ -53,21 +53,116 @@ npm install
 npm run build
 ```
 
+## Multiple Instance Support
+
+The PocketBase MCP server supports running multiple instances with different configurations by using the `MCP_SERVER_NAME` environment variable. This enables you to connect to multiple PocketBase instances simultaneously or use different configurations for different environments.
+
+### Instance-Specific Configuration
+
+When `MCP_SERVER_NAME` is set, the server will look for a configuration file named `.{MCP_SERVER_NAME}-pocketbase-mcp.json` instead of the default `.pocketbase-mcp.json`.
+
+**Example: Development and Production Instances**
+```bash
+# Development instance
+export MCP_SERVER_NAME=dev
+# Uses: .dev-pocketbase-mcp.json
+
+# Production instance
+export MCP_SERVER_NAME=prod
+# Uses: .prod-pocketbase-mcp.json
+
+# Default instance (no MCP_SERVER_NAME)
+# Uses: .pocketbase-mcp.json
+```
+
+### Configuration File Resolution
+
+The server resolves configuration in this order:
+1. **Instance-specific config**: `.{MCP_SERVER_NAME}-pocketbase-mcp.json` (if MCP_SERVER_NAME is set)
+2. **Default config file**: `.pocketbase-mcp.json`
+3. **Environment variable**: `POCKETBASE_URL`
+4. **Default value**: `http://127.0.0.1:8090`
+
+### Benefits of Multiple Instances
+
+- **Multi-environment**: Separate dev, staging, and production PocketBase instances
+- **Multi-project**: Different PocketBase databases for different projects
+- **Testing**: Isolated test environments with dedicated configurations
+- **Claude Code**: Perfect for managing multiple projects with different PocketBase setups
+
+### Example: Multiple PocketBase Instances
+
+**.dev-pocketbase-mcp.json** (Development):
+```json
+{
+  "url": "http://localhost:8091"
+}
+```
+
+**.prod-pocketbase-mcp.json** (Production):
+```json
+{
+  "url": "https://api.myproject.com"
+}
+```
+
+**.test-pocketbase-mcp.json** (Testing):
+```json
+{
+  "url": "http://localhost:8092"
+}
+```
+
+### Claude Code Usage
+
+With Claude Code, you can easily switch between PocketBase instances:
+
+```bash
+# Work with development database
+MCP_SERVER_NAME=dev claude-code "List all collections and their schemas"
+
+# Work with production database
+MCP_SERVER_NAME=prod claude-code "Check system health and backup status"
+
+# Work with test database
+MCP_SERVER_NAME=test claude-code "Create test data and run validation"
+
+# Work with default database
+claude-code "Export all collections to JSON"
+```
+
+### Claude Desktop Integration
+
+For Claude Desktop, configure multiple PocketBase servers:
+
+```json
+{
+  "mcpServers": {
+    "pocketbase-dev": {
+      "command": "node",
+      "args": ["/path/to/pocketbase-mcp-server/dist/mcp-server.js"],
+      "env": {
+        "MCP_SERVER_NAME": "dev"
+      }
+    },
+    "pocketbase-prod": {
+      "command": "node",
+      "args": ["/path/to/pocketbase-mcp-server/dist/mcp-server.js"],
+      "env": {
+        "MCP_SERVER_NAME": "prod"
+      }
+    },
+    "pocketbase": {
+      "command": "node",
+      "args": ["/path/to/pocketbase-mcp-server/dist/mcp-server.js"]
+    }
+  }
+}
+```
+
 ## Configuration
 
 The server can be configured to connect to different PocketBase instances using (in order of precedence):
-
-1. **Local config file** (`.pocketbase-mcp.json` in your project directory):
-   ```json
-   {
-     "url": "http://localhost:8091"
-   }
-   ```
-
-2. **Environment variable**:
-   - `POCKETBASE_URL`: URL of your PocketBase instance
-
-3. **Default**: `http://127.0.0.1:8090`
 
 For complete configuration examples and troubleshooting, see the **[Configuration Examples](./CONFIG_EXAMPLES.md)**.
 
@@ -398,3 +493,5 @@ Contributions are welcome! Please ensure that any new tools:
 ## License
 
 ISC
+
+Last Updated On: June 14, 2025

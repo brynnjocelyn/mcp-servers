@@ -2,13 +2,53 @@
 
 This document provides detailed information about all available tools in the Prisma MCP Server.
 
+**Last Updated On:** December 13, 2024
+
 ## Table of Contents
 
+- [Connection Management Tools](#connection-management-tools)
 - [Schema Management Tools](#schema-management-tools)
 - [Database Management Tools](#database-management-tools)
 - [Migration Tools](#migration-tools)
 - [Data Operation Tools](#data-operation-tools)
 - [Utility Tools](#utility-tools)
+
+## Connection Management Tools
+
+### test_connection
+Test database connection and validate configuration settings.
+
+**Parameters:**
+- None
+
+**Example:**
+```json
+{
+  "tool": "test_connection",
+  "arguments": {}
+}
+```
+
+**Response Example:**
+```
+Configuration Status:
+  Database URL: Configured
+  Database Provider: postgresql
+  Schema Path: ./prisma/schema.prisma
+  Project Root: /path/to/project
+  SSL Enabled: Yes
+    Reject Unauthorized: true
+  Connection Pool:
+    Max: 20
+    Min: 5
+
+Schema Status:
+  ✓ Schema file exists
+
+Database Connection:
+  ✓ Database connection successful
+  Database Version: PostgreSQL 15.1
+```
 
 ## Schema Management Tools
 

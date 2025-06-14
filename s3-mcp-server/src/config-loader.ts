@@ -18,18 +18,34 @@ interface S3Config {
  * Priority: local config file > environment variables > defaults
  */
 export function loadConfig(): S3Config {
-  // Check for local config file
-  const configPath = join(process.cwd(), '.s3-mcp.json');
+  // Determine config file name - check for MCP instance name first
+  const mcpServerName = process.env.MCP_SERVER_NAME || 's3-mcp';
+  const configFileName = `.${mcpServerName}.json`;
+  const configPath = join(process.cwd(), configFileName);
+  
+  // Fallback to default name if custom name doesn't exist
+  const defaultConfigPath = join(process.cwd(), '.s3-mcp.json');
+  
   let fileConfig: Partial<S3Config> = {};
   
   if (existsSync(configPath)) {
     try {
       const configData = readFileSync(configPath, 'utf-8');
       fileConfig = JSON.parse(configData);
-      console.error('Loaded config from .s3-mcp.json');
+      console.error(`Loaded config from ${configFileName}`);
     } catch (error) {
-      console.error('Error reading config file:', error);
+      console.error(`Error reading config file ${configFileName}:`, error);
     }
+  } else if (existsSync(defaultConfigPath)) {
+    try {
+      const configData = readFileSync(defaultConfigPath, 'utf-8');
+      fileConfig = JSON.parse(configData);
+      console.error('Loaded config from .s3-mcp.json (fallback)');
+    } catch (error) {
+      console.error('Error reading config file .s3-mcp.json:', error);
+    }
+  } else {
+    console.error(`No config file found. Checked: ${configFileName}, .s3-mcp.json`);
   }
 
   // Check for S3/MinIO URL format

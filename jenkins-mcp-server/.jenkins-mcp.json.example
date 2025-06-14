@@ -1,0 +1,8 @@
+{
+  "url": "https://jenkins.example.com",
+  "username": "your-username",
+  "apiToken": "your-api-token",
+  "timeout": 30000,
+  "verifySsl": true,
+  "maxRetries": 3
+}

@@ -6,9 +6,24 @@ This document provides configuration examples for the PostgreSQL MCP Server.
 
 The PostgreSQL MCP Server can be configured in three ways (in order of precedence):
 
-1. **Local configuration file** (`.postgresql-mcp.json`)
+1. **Local configuration file** (instance-specific or default)
 2. **Environment variables**
 3. **Default values**
+
+### Multiple Instance Support
+
+The PostgreSQL MCP server supports **instance-specific configuration** using the `MCP_SERVER_NAME` environment variable. This allows you to manage multiple PostgreSQL connections with different configurations.
+
+**Configuration File Resolution:**
+1. **Instance-specific**: `.{MCP_SERVER_NAME}.json` (e.g., `.prod-postgres.json`)
+2. **Default fallback**: `.postgresql-mcp.json`
+3. **Environment variables**: Always available as fallback
+
+**Benefits of Instance-Specific Configs:**
+- **Multiple database environments** (dev, staging, production)
+- **Microservices architecture** (separate databases per service)
+- **Different authentication methods** per environment
+- **Claude Code compatibility** for CLI usage
 
 ## Configuration File Examples
 
